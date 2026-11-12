@@ -120,39 +120,37 @@ def test_leap_day_anchor_is_handled(direct_vm, direct_deploy, direct_alice):
 
 def test_rules_are_published(contract):
     rules = contract.rules()
-    assert rules["count_start"] == "the anchor day itself is not counted"
+    assert rules["business_days"] == "Monday to Friday, no public holidays"
     assert "CALENDAR_DAYS" in rules["units"]
-    assert rules["business_days"].startswith("Monday to Friday")
+    assert rules["min_notice_days"] == 1
 
 
 # ------------------------------------------------------------------ evidence
 
 
 def test_quote_must_print_the_stored_number(direct_vm, direct_deploy, direct_alice):
-    # The sentence is real and on topic, but it prints 10, not 30.
+    """The rejection that killed a previous project: evidence must prove the claim."""
     finding = dict(FINDING)
-    finding["notice_days"] = 30
-    finding["quote"] = "Stripe may amend this Agreement from time to time."
+    finding["notice_days"] = 45
+    # This sentence is really on the page and it is about termination, but it
+    # states 30 days, not 45. It must not be accepted as proof of 45.
     contract = _contract(direct_vm, direct_deploy, direct_alice, finding)
 
     record_id = contract.open_record(URL, ANCHOR)
-    contract.resolve(record_id)
-
-    record = contract.get_record(record_id)
-    assert record["state"] == "UNRESOLVED"
-    assert record["reason"] == "QUOTE_NOT_GROUNDED"
+    assert contract.resolve(record_id) == "UNRESOLVED"
+    assert contract.get_record(record_id)["reason"] == "QUOTE_NOT_SUPPORTING"
+    assert contract.deadline(record_id) == ""
 
 
 def test_quote_must_be_on_the_page(direct_vm, direct_deploy, direct_alice):
     finding = dict(FINDING)
-    finding["quote"] = "Either party may terminate on 30 days notice for any reason."
+    finding["quote"] = "Either party may end this agreement with forty five days written notice."
     contract = _contract(direct_vm, direct_deploy, direct_alice, finding)
 
     record_id = contract.open_record(URL, ANCHOR)
-    contract.resolve(record_id)
-
+    assert contract.resolve(record_id) == "UNRESOLVED"
     assert contract.get_record(record_id)["reason"] == "QUOTE_NOT_GROUNDED"
-  
+
 
 def test_quote_must_be_about_ending_the_agreement(direct_vm, direct_deploy, direct_alice):
     finding = dict(FINDING)
