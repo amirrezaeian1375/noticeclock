@@ -4,6 +4,8 @@ A GenLayer Intelligent Contract that answers one question about a public contrac
 page: by which date do I have to give notice so I am out before my term ends, and
 which sentence says so?
 
+Deployed on Studionet: `0xb6119F10f7De149a74A5f680b85680d637751f45`
+
 ## The problem
 
 Most business subscriptions renew on their own. The way out is a notice period
@@ -125,6 +127,33 @@ pip install -r requirements.txt
 pytest tests/direct -q
 genvm-lint check contracts/noticeclock.py
 ```
+
+## Live proof on Studionet
+
+| Case | Transaction | Result |
+| --- | --- | --- |
+| deploy | `0x4b7292d0ffa01200e339f9377e5a16f5c3bf1394fcce6215e9039fec4902477a` | FINALIZED, MAJORITY_AGREE |
+| open Hetzner terms, term ends 2027-03-31 | `0xec1758f285b83840e084d4909c4e85c9562265fa2994e85161273e91371096f2` | record N1, MAJORITY_AGREE |
+| resolve that record | `0x4565b278c106ae6014dd7f80ff0189af771b36f41ece0e5ec9e1eaca247a8769` | FINALIZED, MAJORITY_AGREE, RESOLVED |
+| resolve a page with no clause | `0x9ab3669456a195614d0224234c11d2d3b17da6240143b2feda8e7fbf65939ed7` | UNRESOLVED, `NO_NOTICE_CLAUSE` |
+| open with a plain `http://` URL | `0x24d00e1a71304c238796165dbb83d4e9628fae664214fa1c49b18d828b8e13b9` | FINALIZED, rollback, `URL_MUST_BE_HTTPS` |
+
+The stored record:
+
+```json
+{
+  "state": "RESOLVED",
+  "notice_days": 30,
+  "unit": "CALENDAR_DAYS",
+  "applies_to": "BOTH",
+  "anchor_iso": "2027-03-31",
+  "deadline_iso": "2027-03-01",
+  "quote": "The contract may be terminated by either party with 30 days' notice to the end of the month, without specifying any reasons."
+}
+```
+
+Views: `is_notice_open(id, "2026-12-01")` is `true`, `is_notice_open(id,
+"2027-03-02")` is `false`, `days_left(id, "2026-12-01")` is `90`.
 
 ## Known limits
 
