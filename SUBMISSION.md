@@ -18,14 +18,15 @@ stated period, and stores the last day to give notice together with the exact
 sentence it relied on. A caller can then ask `is_notice_open(id, today)` and
 `days_left(id, today)` and act on the result.
 
-A live run against the Hetzner terms, term ending 2027-03-31:
+Live, resolved on chain against the Hetzner terms:
 
 ```
 state         RESOLVED
 notice_days   30
 unit          CALENDAR_DAYS
 applies_to    BOTH
-deadline      2027-03-01
+anchor        2027-03-31   (term end, supplied by the caller)
+deadline      2027-03-01   (last day to give notice)
 quote         "The contract may be terminated by either party with 30 days'
               notice to the end of the month, without specifying any reasons."
 ```
@@ -95,15 +96,20 @@ prompt.
 ```
 contract      0xb6119F10f7De149a74A5f680b85680d637751f45
 deploy tx     0x4b7292d0ffa01200e339f9377e5a16f5c3bf1394fcce6215e9039fec4902477a  FINALIZED, MAJORITY_AGREE
-open tx       0xec1758f285b83840e084d4909c4e85c9562265fa2994e85161273e91371096f2  record N1
+open tx       0xec1758f285b83840e084d4909c4e85c9562265fa2994e85161273e91371096f2  record N1, MAJORITY_AGREE
 resolve tx    0x4565b278c106ae6014dd7f80ff0189af771b36f41ece0e5ec9e1eaca247a8769  FINALIZED, MAJORITY_AGREE, RESOLVED
 fail closed   0x9ab3669456a195614d0224234c11d2d3b17da6240143b2feda8e7fbf65939ed7  UNRESOLVED, NO_NOTICE_CLAUSE
+input guard   0x24d00e1a71304c238796165dbb83d4e9628fae664214fa1c49b18d828b8e13b9  FINALIZED, rollback, URL_MUST_BE_HTTPS
 ```
 
 The resolved record stores `notice_days 30`, `unit CALENDAR_DAYS`, `applies_to
 BOTH`, `deadline_iso 2027-03-01`, and the sentence from the page. Views on it:
 `is_notice_open(id, "2026-12-01")` is `true`, `is_notice_open(id, "2027-03-02")`
 is `false`, `days_left(id, "2026-12-01")` is `90`.
+
+The second record, on a page with no clause, stores `state UNRESOLVED`, `reason
+NO_NOTICE_CLAUSE`, and an empty `deadline_iso`. It does not guess a date, which is
+the behaviour the whole design is built around.
 
 ## Limits, stated honestly
 
